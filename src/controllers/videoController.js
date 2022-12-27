@@ -1,39 +1,53 @@
-let videos = [
-  {
-    title: "First Video",
-    rating: 5,
-    comments: 2,
-    createdAt: "2 minutes ago",
-    views: 59,
-    id: 1,
-  },
-  {
-    title: "Second Video",
-    rating: 5,
-    comments: 2,
-    createdAt: "2 minutes ago",
-    views: 59,
-    id: 2,
-  },
-  {
-    title: "Third Video",
-    rating: 5,
-    comments: 2,
-    createdAt: "2 minutes ago",
-    views: 59,
-    id: 3,
-  },
-];
+import Video from "../models/Video";
 
-export const trending = (req, res) => {
+/*
+console.log("start")
+Video.find({}, (error, videos) => {
+    if(error){
+    return res.render("server-error")
+  }
+  return res.render("home", { pageTitle: "Home", videos });
+});
+console.log("finished")
+*/
+
+export const home = async (req, res) => {
+  const videos = await Video.find({});
   return res.render("home", { pageTitle: "Home", videos });
 };
-export const see = (req, res) => {
+
+export const watch = async (req, res) => {
   const { id } = req.params;
-  const video = videos[id - 1];
-  return res.render("watch", { pageTitle: `Watching ${video.title}` });
+  const video = await Video.findById(id);
+  return res.render("watch", { pageTitle: video.title, video });
 };
-export const edit = (req, res) => res.render("edit");
-export const search = (req, res) => res.send("Search");
-export const upload = (req, res) => res.send("Upload");
-export const deleteVideo = (req, res) => res.send("Delete Video");
+export const getEdit = (req, res) => {
+  const { id } = req.params;
+  return res.render("edit", { pageTitle: `Editing` });
+};
+export const postEdit = (req, res) => {
+  const { id } = req.params;
+  const { title } = req.body;
+  return res.redirect(`/videos/${id}`);
+};
+
+export const getUpload = async (req, res) => {
+  return res.render("upload", { pageTitle: "Upload Video" });
+};
+
+export const postUpload = (req, res) => {
+  const { title, description, hashtags } = req.body;
+  try {
+    await Video.create({
+      title,
+      description,
+      hashtags: hashtags.split(",").map((word) => `#${word}`),
+    });
+    return res.redirect("/");
+  } catch (error) {
+    return res.render("upload", {
+      pageTitle: "Upload Video",
+      errorMessage: error._message,
+    });
+  }
+};
